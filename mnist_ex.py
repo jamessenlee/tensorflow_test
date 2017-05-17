@@ -36,8 +36,8 @@ def main(argv=None):
 
 	x_image = tf.reshape(x,[-1,28,28,1])
 
-	W = tf.Variable(tf.zeros([784,10]))
-	b = tf.Variable(tf.zeros([10]))
+	#W = tf.Variable(tf.zeros([784,10]))
+	#b = tf.Variable(tf.zeros([10]))
 
 	W_conv1 = weight_variable([5,5,1,32])
 	b_conv1 = bias_variable([32])
@@ -77,11 +77,11 @@ def main(argv=None):
 	y_conv = tf.nn.softmax(tf.matmul(h_fc1_drop,W_fc2) + b_fc2)
 
 
-	y = tf.nn.softmax(tf.matmul(x,W) + b)
+	#y = tf.nn.softmax(tf.matmul(x,W) + b)
 
-	cross_entropy = -tf.reduce_mean(y_ * tf.log(y))
+	cross_entropy = -tf.reduce_mean(y_ * tf.log(y_conv))
 
-	correct_prediction = tf.equal(tf.argmax(y,1),tf.argmax(y_,1))
+	correct_prediction = tf.equal(tf.argmax(y_conv,1),tf.argmax(y_,1))
 	accuracy = tf.reduce_mean(tf.cast(correct_prediction,"float"))
 
 #	train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
@@ -90,9 +90,9 @@ def main(argv=None):
 
 	sess.run(tf.initialize_all_variables())
 
-	for i in range(90000):
-		batch = mnist.train.next_batch(500)
-		if i % 5000 == 0:
+	for i in range(20000):
+		batch = mnist.train.next_batch(50)
+		if i % 100 == 0:
 			train_accuracy = accuracy.eval(feed_dict={x:batch[0],y_:batch[1],keep_prob:1.0})
 			print "After step(s) i=%d, training accuracy %g" %(i,train_accuracy)
 		train_step.run(feed_dict={x:batch[0],y_:batch[1],keep_prob:0.5}) 

@@ -10,6 +10,8 @@ import numpy as np
 
 from tensorflow.examples.tutorials.mnist import input_data
 
+check_point_file = "./check/checkpoint.ckpt"
+
 mnist = input_data.read_data_sets('../../data/MNIST_data',one_hot=True)
 
 input_size  = 28
@@ -26,7 +28,7 @@ dcl_layer1_size = 1024
 output_size = 10
 
 
-epoches = 3000
+epoches = 1000
 batch_size  = 50
 
 learning_rate = 1e-4
@@ -35,15 +37,21 @@ def weight_variable(shape,name,dtype=tf.float32,initval=None):
 	if (initval is None):
 		initval = tf.truncated_normal(shape,stddev=0.1)
 
-	return tf.Variable(initval,name=name,dtype=dtype)
+	w =  tf.Variable(initval,name=name,dtype=dtype)
+	tf.summary.histogram(name,w)
+
+	return w
 	
 def biases_variable(shape,name,dtype=tf.float32,initval=None):
 	if (initval is None):
 		initval = tf.constant(0.1,shape=shape)
 
-	return tf.Variable(initval)
+	b =  tf.Variable(initval)
+	tf.summary.histogram(name,b)
 
+	return b
 
+	
 def conv2d(x,W):
 	return tf.nn.conv2d(x,W,[1,1,1,1],padding='SAME')
 
@@ -97,6 +105,7 @@ class ConvMnistModel(object):
 			#no softmax,
 			#y is [None,10]
 			self.y = tf.matmul(self.h_fc1_drop,self.dcl_w2) + self.dcl_b2
+			tf.summary.histogram("output",self.y)
 
 
 	def cost(self):
@@ -123,17 +132,30 @@ keep_prob = tf.placeholder(tf.float32)
 
 model = ConvMnistModel(X,y_,keep_prob)
 
-cross_entropy = model.cost()
-train_op = model.train_op()
+with tf.name_scope("loss"):
+	cross_entropy = model.cost()
+	tf.summary.scalar('loss',cross_entropy)
+
+with tf.name_scope("train"):
+	train_op = model.train_op()
+
+
 train_accuracy_op = model.accuracy_op()
 test_accuracy_op = model.accuracy_op()
 
 gl_init = tf.global_variables_initializer()
 lo_init = tf.local_variables_initializer()
 
+saver = tf.train.Saver()
 
 print ("begin training")
 with tf.Session() as sess:
+
+	
+	
+	merged = tf.summary.merge_all()
+	sum_writer = tf.summary.FileWriter("./logs/",sess.graph)
+
 	sess.run(gl_init)
 	sess.run(lo_init)
 
@@ -152,10 +174,15 @@ with tf.Session() as sess:
 				}
 			)
 			print  ("step %d,training accuracy is %g" %(epoch,train_acc) )
+			result = sess.run(merged,feed_dict={
+				X:batch_xs,y_:batch_ys,keep_prob:1.0
+				})
+			sum_writer.add_summary(result,epoch)
+			saver.save(sess,check_point_file,global_step=epoch)
 
 
 	test_accuracy = sess.run(test_accuracy_op,feed_dict={
-					X:mnist.test.images,y_:mnist.test.label,keep_prob:1.0
+					X:mnist.test.images,y_:mnist.test.labels,keep_prob:1.0
 				}
 			)
 

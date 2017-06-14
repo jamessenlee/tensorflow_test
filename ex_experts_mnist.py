@@ -12,7 +12,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 
 check_point_file = "./check/checkpoint.ckpt"
 
-mnist = input_data.read_data_sets('../../data/MNIST_data',one_hot=True)
+mnist = input_data.read_data_sets('./data/MNIST_data',one_hot=True)
 
 input_size  = 28
 conv_layer1_size = 5
@@ -28,7 +28,7 @@ dcl_layer1_size = 1024
 output_size = 10
 
 
-epoches = 200
+epoches = 1000
 batch_size  = 50
 
 learning_rate = 1e-4
@@ -41,7 +41,7 @@ def weight_variable(shape,name,dtype=tf.float32,initval=None):
 	tf.summary.histogram(name,w)
 
 	return w
-	
+
 def biases_variable(shape,name,dtype=tf.float32,initval=None):
 	if (initval is None):
 		initval = tf.constant(0.1,shape=shape)
@@ -51,7 +51,7 @@ def biases_variable(shape,name,dtype=tf.float32,initval=None):
 
 	return b
 
-	
+
 def conv2d(x,W):
 	return tf.nn.conv2d(x,W,[1,1,1,1],padding='SAME')
 
@@ -68,12 +68,12 @@ class ConvMnistModel(object):
 		with tf.name_scope("conv_layer1"):
 			self.conv_w1 = weight_variable([conv_layer1_size,conv_layer1_size,1,conv_layer1_channel],name="conv_w1")
 			self.conv_b1 = biases_variable([conv_layer1_channel],name="conv_b1")
-			
+
 			self.conv_in1 = tf.reshape(self.inputs,[-1,input_size,input_size,1])
 
 			#h_conv1 is (None,28,28,32)
 			self.h_conv1 = self.acf(conv2d(self.conv_in1,self.conv_w1) + self.conv_b1)
-	
+
 			#h_pool1 is (None,14,14,32)
 			self.h_pool1 = max_pool_2x2(self.h_conv1)
 
@@ -81,10 +81,10 @@ class ConvMnistModel(object):
 		with tf.name_scope("conv_layer2"):
 			self.conv_w2 = weight_variable([conv_layer2_size,conv_layer2_size,conv_layer1_channel,conv_layer2_channel],name="conv_w2")
 			self.conv_b2 = biases_variable([conv_layer2_channel],name="conv_b2")
-		
+
 			#h_conv2 is (None,14,14,64)
 			self.h_conv2 = self.acf(conv2d(self.h_pool1,self.conv_w2) + self.conv_b2)
-	
+
 			#h_pool2 is (None,7,7,64)
 			self.h_pool2 = max_pool_2x2(self.h_conv2)
 
@@ -97,7 +97,7 @@ class ConvMnistModel(object):
 			#h_fc1 is (None,1024)
 			self.h_fc1 = self.acf(tf.matmul(self.pool2_flat,self.dcl_w1)+self.dcl_b1)
 			self.h_fc1_drop = tf.nn.dropout(self.h_fc1,keep_prob)
-		
+
 		with tf.name_scope("output_layer"):
 			self.dcl_w2 = weight_variable([dcl_layer1_size,output_size],name="dcl_w2")
 			self.dcl_b2 = biases_variable([output_size],"dcl_b2")
@@ -122,11 +122,9 @@ class ConvMnistModel(object):
 
 
 	def accuracy_op(self):
-		print("11111")
 		print (self.y.get_shape())
 		print (self.outputs.get_shape())
 		self.correct_pred = tf.equal(tf.argmax(self.y,1),tf.argmax(self.outputs,1))
-		print("22222")
 		return tf.reduce_mean(tf.cast(self.correct_pred,tf.float32))
 
 
@@ -154,7 +152,7 @@ saver = tf.train.Saver()
 
 print ("begin training")
 with tf.Session() as sess:
-	
+
 	merged = tf.summary.merge_all()
 	sum_writer = tf.summary.FileWriter("./logs/",sess.graph)
 
@@ -182,13 +180,10 @@ with tf.Session() as sess:
 			sum_writer.add_summary(result,epoch)
 			saver.save(sess,check_point_file,global_step=epoch)
 
-		print("epoch:%d"%epoch  )
 
-	print("!!!!!!!!!")
 	test_accuracy = sess.run(test_accuracy_op,feed_dict={
 					X:mnist.test.images,y_:mnist.test.labels,keep_prob:1.0
 				}
 			)
 
-	print("@@@@")
 	print  ("finish training,test accuracy is %g" %(test_accuracy) )

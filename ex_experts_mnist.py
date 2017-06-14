@@ -28,7 +28,7 @@ dcl_layer1_size = 1024
 output_size = 10
 
 
-epoches = 1000
+epoches = 200
 batch_size  = 50
 
 learning_rate = 1e-4
@@ -122,7 +122,11 @@ class ConvMnistModel(object):
 
 
 	def accuracy_op(self):
+		print("11111")
+		print (self.y.get_shape())
+		print (self.outputs.get_shape())
 		self.correct_pred = tf.equal(tf.argmax(self.y,1),tf.argmax(self.outputs,1))
+		print("22222")
 		return tf.reduce_mean(tf.cast(self.correct_pred,tf.float32))
 
 
@@ -150,8 +154,6 @@ saver = tf.train.Saver()
 
 print ("begin training")
 with tf.Session() as sess:
-
-	
 	
 	merged = tf.summary.merge_all()
 	sum_writer = tf.summary.FileWriter("./logs/",sess.graph)
@@ -180,10 +182,13 @@ with tf.Session() as sess:
 			sum_writer.add_summary(result,epoch)
 			saver.save(sess,check_point_file,global_step=epoch)
 
+		print("epoch:%d"%epoch  )
 
+	print("!!!!!!!!!")
 	test_accuracy = sess.run(test_accuracy_op,feed_dict={
 					X:mnist.test.images,y_:mnist.test.labels,keep_prob:1.0
 				}
 			)
 
-	print  ("finish training,test accuracy is %g" %(test_acc) )
+	print("@@@@")
+	print  ("finish training,test accuracy is %g" %(test_accuracy) )
